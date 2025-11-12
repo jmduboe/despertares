@@ -1,0 +1,195 @@
+// Prisma schema for Despertares - Sistema de gestión terapéutica
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      UserRole @default(PROFESSIONAL)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  professional Professional?
+
+  @@map("User")
+}
+
+model Professional {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String?   @unique
+  active    Boolean   @default(true)
+  userId    Int?      @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user                User?                      @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  professionalAvailabilities ProfessionalAvailability[]
+  professionalSpecialties  ProfessionalSpecialty[]
+  reports                  Report[]
+  patientTherapies         PatientTherapy[]
+  dailyRecords             DailyRecord[]
+
+  @@map("Professional")
+}
+
+model Therapy {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  professionalAvailabilities ProfessionalAvailability[]
+  professionalSpecialties  ProfessionalSpecialty[]
+  patientTherapies         PatientTherapy[]
+
+  @@map("Therapy")
+}
+
+model ProfessionalAvailability {
+  id             Int    @id @default(autoincrement())
+  professionalId Int
+  therapyId      Int
+  time           String
+  dayOfWeek      String
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  therapy      Therapy      @relation(fields: [therapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("ProfessionalAvailability")
+}
+
+model ProfessionalSpecialty {
+  professionalId Int
+  therapyId      Int
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  therapy      Therapy      @relation(fields: [therapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([professionalId, therapyId])
+  @@map("ProfessionalSpecialty")
+}
+
+model Patient {
+  id             Int       @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  birthDate      DateTime?
+  schoolShift    String?
+  healthInsurance String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  reports              Report[]
+  patientTherapies     PatientTherapy[]
+  authorizationsOS     AuthorizationOS[]
+  dailyRecords         DailyRecord[]
+  patientScheduleOS    PatientScheduleOS[]
+  patientScheduleReal  PatientScheduleReal[]
+
+  @@map("Patient")
+}
+
+model PatientTherapy {
+  id             Int      @id @default(autoincrement())
+  patientId      Int
+  therapyId      Int
+  professionalId Int
+  startDate      DateTime
+  endDate        DateTime
+
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  therapy        Therapy        @relation(fields: [therapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  professional   Professional   @relation(fields: [professionalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  authorizationsOS AuthorizationOS[]
+  dailyRecords   DailyRecord[]
+  patientScheduleOS   PatientScheduleOS[]
+  patientScheduleReal PatientScheduleReal[]
+
+  @@map("PatientTherapy")
+}
+
+model Report {
+  id             Int      @id @default(autoincrement())
+  periodFrom     DateTime
+  periodTo       DateTime
+  content        String
+  professionalId Int
+  patientId      Int
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("Report")
+}
+
+model DailyRecord {
+  id             Int      @id @default(autoincrement())
+  date           DateTime
+  notes          String?
+  attendance     Boolean  @default(true)
+  patientTherapyId Int
+  professionalId Int
+  patientId      Int
+
+  patientTherapy PatientTherapy @relation(fields: [patientTherapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  professional   Professional   @relation(fields: [professionalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("DailyRecord")
+}
+
+model AuthorizationOS {
+  id               Int      @id @default(autoincrement())
+  patientTherapyId Int
+  totalSessions    Int
+  validFrom        DateTime
+  validTo          DateTime
+  consumedSessions Int      @default(0)
+  patientId        Int
+
+  patientTherapy PatientTherapy @relation(fields: [patientTherapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("AuthorizationOS")
+}
+
+model PatientScheduleOS {
+  id             Int      @id @default(autoincrement())
+  time           String
+  patientTherapyId Int
+  patientId      Int
+  dayOfWeek      String
+
+  patientTherapy PatientTherapy @relation(fields: [patientTherapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("PatientScheduleOS")
+}
+
+model PatientScheduleReal {
+  id             Int      @id @default(autoincrement())
+  time           String
+  patientTherapyId Int
+  patientId      Int
+  dayOfWeek      String
+
+  patientTherapy PatientTherapy @relation(fields: [patientTherapyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  patient        Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("PatientScheduleReal")
+}
+
+enum UserRole {
+  ADMIN
+  COORDINATOR
+  PROFESSIONAL
+  ASSISTANT
+}

@@ -1,0 +1,27 @@
+{
+  "name": "despertares-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de gestión para centro terapéutico infantil",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "db:migrate": "turbo run db:migrate",
+    "db:reset": "turbo run db:reset"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "turbo": "^2.4.0",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
